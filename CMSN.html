@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Happy Birthday Ai 🎀</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: "Trebuchet MS", sans-serif;
+    background: linear-gradient(
+        135deg,
+        #ffe0ec,
+        #f9e4ff,
+        #fff0f5
+    );
+}
+
+.card {
+    position: relative;
+    z-index: 2;
+    width: 88%;
+    max-width: 390px;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    padding: 28px 22px;
+    border: 3px solid white;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 10px 35px #e9b5d5;
+}
+
+.bear {
+    font-size: 65px;
+    animation: bounce 2s infinite;
+}
+
+h1 {
+    color: #f16caa;
+    font-size: 27px;
+    line-height: 1.4;
+}
+
+h2 {
+    color: #f16caa;
+    font-size: 22px;
+}
+
+p {
+    color: #956b91;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+button {
+    border: none;
+    border-radius: 25px;
+    padding: 12px 18px;
+    margin: 6px 3px;
+    font-size: 14px;
+    color: white;
+    background: linear-gradient(90deg, #ff8fbd, #dca3ff);
+    box-shadow: 0 4px 10px #e8c0df;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+#surprise {
+    display: none;
+    animation: appear 1s ease;
+}
+
+#musicStatus {
+    font-size: 12px;
+    color: #b47ba8;
+}
+
+.floating {
+    position: fixed;
+    bottom: -40px;
+    z-index: 1;
+    pointer-events: none;
+    animation: floatUp linear forwards;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes floatUp {
+    to {
+        transform: translateY(-115vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="bear">🧸🎀</div>
+
+    <h1>
+        Happy Birthday,<br>
+        Ai Hirata! 💗
+    </h1>
+
+    <p>
+        ✨ A little gift just for you ✨<br>
+        Today is your special day!<br>
+        I hope your day is full of<br>
+        happiness, love and laughter 🌷
+    </p>
+
+    <button onclick="openGift()">
+        🎁 Open your gift
+    </button>
+
+    <button onclick="toggleMusic()">
+        🎵 Music on / off
+    </button>
+
+    <p id="musicStatus">
+        🎵 Nhấn nút để bật nhạc
+    </p>
+
+    <div id="surprise">
+
+        <div style="font-size:45px">🎂💖🌸</div>
+
+        <h2>お誕生日おめでとう！</h2>
+
+        <p>
+            いつも笑顔でいてね！ 💕<br>
+            たくさんの幸せが訪れますように。🌷<br>
+        </p>
+
+        <p>
+            いつも笑顔でいてね！<br>
+            素敵なことがたくさんありますように！<br>
+            最高の一年になりますように！ 💌
+        </p>
+
+        <div style="font-size:30px">
+            🎀💗🧸💗🎀
+        </div>
+
+        <p>With lots of love ♡</p>
+
+    </div>
+</div>
+
+<script>
+// =====================================
+// 1. GIAI ĐIỆU HAPPY BIRTHDAY
+// Mỗi phần tử gồm: tần số (Hz), thời lượng (giây)
+// =====================================
+
+const melody = [
+    // Happy birthday to you
+    [392.00, 0.32],
+    [392.00, 0.32],
+    [440.00, 0.68],
+    [392.00, 0.68],
+    [523.25, 0.68],
+    [493.88, 1.05],
+
+    // Happy birthday to you
+    [392.00, 0.32],
+    [392.00, 0.32],
+    [440.00, 0.68],
+    [392.00, 0.68],
+    [587.33, 0.68],
+    [523.25, 1.05],
+
+    // Happy birthday dear ...
+    [392.00, 0.32],
+    [392.00, 0.32],
+    [783.99, 0.68],
+    [659.25, 0.68],
+    [523.25, 0.68],
+    [493.88, 0.68],
+    [440.00, 1.05],
+
+    // Happy birthday to you
+    [698.46, 0.32],
+    [698.46, 0.32],
+    [659.25, 0.68],
+    [523.25, 0.68],
+    [587.33, 0.68],
+    [523.25, 1.25]
+];
+
+let audioContext = null;
+let musicPlaying = false;
+let noteIndex = 0;
+let musicTimeout = null;
+let currentOscillator = null;
+let musicSession = 0;
+
+// =====================================
+// 2. PHÁT TỪNG NỐT, KHÔNG CHỒNG ÂM
+// =====================================
+
+function playNextNote(session) {
+    if (!musicPlaying || session !== musicSession) return;
+
+    // Hết một lượt thì nghỉ rồi phát lại
+    if (noteIndex >= melody.length) {
+        noteIndex = 0;
+
+        musicTimeout = setTimeout(() => {
+            playNextNote(session);
+        }, 1400);
+
+        return;
+    }
+
+    const [frequency, duration] = melody[noteIndex];
+    const now = audioContext.currentTime;
+
+    const oscillator = audioContext.createOscillator();
+    const volume = audioContext.createGain();
+
+    currentOscillator = oscillator;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, now);
+
+    volume.gain.setValueAtTime(0.0001, now);
+    volume.gain.linearRampToValueAtTime(0.07, now + 0.025);
+    volume.gain.setValueAtTime(
+        0.07,
+        now + duration * 0.72
+    );
+    volume.gain.linearRampToValueAtTime(
+        0.0001,
+        now + duration
+    );
+
+    oscillator.connect(volume);
+    volume.connect(audioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+
+    noteIndex++;
+
+    // Nghỉ ngắn giữa các nốt để nghe rõ nhịp
+    musicTimeout = setTimeout(() => {
+        playNextNote(session);
+    }, duration * 1000 + 70);
+}
+
+// =====================================
+// 3. BẬT / TẮT NHẠC
+// =====================================
+
+async function toggleMusic() {
+    const status = document.getElementById("musicStatus");
+
+    if (musicPlaying) {
+        musicPlaying = false;
+        musicSession++;
+
+        clearTimeout(musicTimeout);
+
+        if (currentOscillator) {
+            try {
+                currentOscillator.stop();
+            } catch (error) {
+                // Âm thanh có thể đã dừng
+            }
+            currentOscillator = null;
+        }
+
+        status.textContent = "🎵 Nhạc đã tắt";
+        return;
+    }
+
+    try {
+        const AudioContextClass =
+            window.AudioContext || window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+            status.textContent =
+                "Trình duyệt của bạn chưa hỗ trợ phát nhạc.";
+            return;
+        }
+
+        if (!audioContext) {
+            audioContext = new AudioContextClass();
+        }
+
+        await audioContext.resume();
+
+        musicPlaying = true;
+        noteIndex = 0;
+        musicSession++;
+
+        status.textContent = "🎶 Happy Birthday đang phát!";
+
+        playNextNote(musicSession);
+
+    } catch (error) {
+        musicPlaying = false;
+        status.textContent = "Không phát được nhạc. Hãy thử lại nhé!";
+    }
+}
+
+// =====================================
+// 4. HIỆU ỨNG TRÁI TIM BAY
+// =====================================
+
+function createFloating() {
+    const item = document.createElement("div");
+    item.className = "floating";
+
+    const symbols = ["💗", "💕", "🌸", "✨", "🎀", "💖"];
+
+    item.textContent =
+        symbols[Math.floor(Math.random() * symbols.length)];
+
+    item.style.left = Math.random() * 100 + "vw";
+    item.style.fontSize = (18 + Math.random() * 22) + "px";
+    item.style.animationDuration = (4 + Math.random() * 4) + "s";
+
+    document.body.appendChild(item);
+
+    setTimeout(() => item.remove(), 8000);
+}
+
+setInterval(createFloating, 500);
+
+// =====================================
+// 5. MỞ QUÀ SINH NHẬT
+// =====================================
+
+let giftOpened = false;
+
+function openGift() {
+    document.getElementById("surprise").style.display = "block";
+
+    if (!giftOpened) {
+        giftOpened = true;
+
+        for (let i = 0; i < 30; i++) {
+            setTimeout(createFloating, i * 100);
+        }
+    }
+}
+</script>
+
+</body>
+</html>
